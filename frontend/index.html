@@ -356,6 +356,37 @@
         .tree li.folder::before { content: "📁 "; }
         .tree li.file::before { content: "🎬 "; }
 
+        /* 版本信息样式 */
+        .version-info {
+            background: var(--bg-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .version-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .version-item:last-child {
+            border-bottom: none;
+        }
+
+        .version-item strong {
+            color: var(--primary-color);
+        }
+
+        #versionDisplay {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1em;
+        }
+
         /* 日志滚动区域 */
         #logs, #folderTree {
             max-height: 55vh;
@@ -964,8 +995,23 @@
 
                 <div id="about" class="module" style="display:none;">
                     <h2>关于</h2>
-                    <p>版本号：v0.1.0</p>
+                    <div class="version-info">
+                        <div class="version-item">
+                            <strong>版本号：</strong><span id="versionDisplay">v0.0.1</span>
+                        </div>
+                        <div class="version-item">
+                            <strong>构建时间：</strong><span id="buildTime">2024-01-15 00:00:00</span>
+                        </div>
+                        <div class="version-item">
+                            <strong>Commit：</strong><span id="commitHash">initial</span>
+                        </div>
+                        <div class="version-item">
+                            <strong>架构：</strong><span id="architecture">loading...</span>
+                        </div>
+                    </div>
+                    
                     <p>115自动整理工具 - 基于115网盘的媒体文件智能整理系统</p>
+                    
                     <div class="mb-3">
                         <label class="form-label">主题设置</label>
                         <select class="form-select" id="themeSelect" onchange="changeTheme(this.value)">
@@ -975,6 +1021,7 @@
                             <option value="starry">星空模式</option>
                         </select>
                     </div>
+                    
                     <button class="btn btn-secondary" onclick="restartSystem()">重启系统</button>
                     <button class="btn btn-primary mt-2" onclick="checkUpdates()">检查更新</button>
                 </div>
@@ -1150,6 +1197,37 @@
             }
         }
 
+        // 获取版本信息
+        async function loadVersionInfo() {
+            try {
+                const response = await fetch('/api/version');
+                const versionInfo = await response.json();
+                
+                // 更新界面显示
+                document.getElementById('versionDisplay').textContent = versionInfo.version;
+                document.getElementById('buildTime').textContent = versionInfo.build_time;
+                document.getElementById('commitHash').textContent = versionInfo.commit_hash;
+                
+                // 获取架构信息
+                const healthResponse = await fetch('/health');
+                const healthInfo = await healthResponse.json();
+                document.getElementById('architecture').textContent = healthInfo.architecture;
+                
+                // 在控制台显示
+                console.log(`🎉 SQNB ${versionInfo.version}`);
+                console.log(`📅 Build: ${versionInfo.build_time}`);
+                console.log(`🔗 Commit: ${versionInfo.commit_hash}`);
+                console.log(`🏗️ Architecture: ${healthInfo.architecture}`);
+                
+                // 更新页面标题
+                document.title = `SQNB - ${versionInfo.version}`;
+                
+            } catch (error) {
+                console.error('Failed to load version info:', error);
+                document.getElementById('versionDisplay').textContent = 'v0.0.1-dev';
+            }
+        }
+
         // 切换模块
         function showModule(id){
             document.querySelectorAll('.module').forEach(m => m.style.display='none');
@@ -1169,6 +1247,11 @@
                 'about': '关于'
             };
             pageTitle.textContent = moduleTitles[id];
+            
+            // 在关于页面加载版本信息
+            if (id === 'about') {
+                loadVersionInfo();
+            }
             
             // 在移动端点击菜单后自动关闭侧边栏
             if (window.innerWidth <= 768) {
@@ -1458,6 +1541,9 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 延迟加载版本信息，确保API服务已启动
+            setTimeout(loadVersionInfo, 1000);
+            
             const savedTheme = localStorage.getItem('theme');
             
             if (savedTheme) {
@@ -1465,7 +1551,6 @@
                 document.getElementById('themeSelect').value = savedTheme;
             } else {
                 updateThemeBasedOnTime();
-                // 设置定时器每小时检查一次
                 setInterval(updateThemeBasedOnTime, 60 * 60 * 1000);
             }
             
