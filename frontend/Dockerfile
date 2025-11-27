@@ -1,10 +1,12 @@
-FROM node:16-alpine
+FROM nginx:alpine
 
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
+# 复制静态文件
+COPY index.html /usr/share/nginx/html/
+COPY assets/ /usr/share/nginx/html/assets/
 
-COPY . .
-EXPOSE 9710  # 确保这里也是 9710
+# 复制自定义nginx配置（可选）
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "9710"]
+EXPOSE 9710
+
+CMD ["nginx", "-g", "daemon off;"]
