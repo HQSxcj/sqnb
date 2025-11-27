@@ -1,6 +1,6 @@
 FROM nginx:alpine
 
-# 复制静态文件
+# 只复制index.html，不移除assets目录
 COPY index.html /usr/share/nginx/html/
 
 # 自定义nginx配置
