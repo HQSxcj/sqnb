@@ -3,70 +3,1481 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>115文件整理工具</title>
+    <title>SQNB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* ================== 主题系统 ================== */
+        :root {
+            --primary-color: #4ecdc4;
+            --secondary-color: #45b7c0;
+            --bg-color: #2a2f3a;
+            --card-bg: #34495e;
+            --text-color: #d1e8e2;
+            --text-secondary: #a3c9d6;
+            --nav-bg: #1e252f;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 60px;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-size: 13px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.5;
             margin: 0;
-            padding: 20px;
-            background: #2a2f3a;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* 亮色模式 */
+        body.light-mode {
+            --primary-color: #00bcd4;
+            --secondary-color: #00838f;
+            --bg-color: #f5f7fa;
+            --card-bg: #f5f5f5;
+            --text-color: #333;
+            --text-secondary: #666;
+            --nav-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* 星空模式 */
+        body.starry-mode {
+            --primary-color: #616161;
+            --secondary-color: #757575;
+            --bg-color: #121212;
+            --card-bg: rgba(50, 50, 50, 0.9);
+            --text-color: #d0d0d0;
+            --text-secondary: #9e9e9e;
+            --nav-bg: rgba(30, 30, 30, 0.9);
+            --border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .starry-mode {
+            background: #121212 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 800 800"><g fill="rgba(255,255,255,0.15)"><circle cx="50" cy="50" r="1"/><circle cx="150" cy="150" r="1"/><circle cx="250" cy="50" r="1.5"/><circle cx="350" cy="150" r="1"/><circle cx="450" cy="50" r="1"/><circle cx="550" cy="150" r="1.5"/><circle cx="650" cy="50" r="1"/><circle cx="750" cy="150" r="1"/><circle cx="50" cy="250" r="1.5"/><circle cx="150" cy="350" r="1"/><circle cx="250" cy="250" r="1"/><circle cx="350" cy="350" r="1.5"/><circle cx="450" cy="250" r="1"/><circle cx="550" cy="350" r="1"/><circle cx="650" cy="250" r="1.5"/><circle cx="750" cy="350" r="1"/><circle cx="50" cy="450" r="1"/><circle cx="150" cy="550" r="1.5"/><circle cx="250" cy="450" r="1"/><circle cx="350" cy="550" r="1"/><circle cx="450" cy="450" r="1.5"/><circle cx="550" cy="550" r="1"/><circle cx="650" cy="450" r="1"/><circle cx="750" cy="550" r="1.5"/><circle cx="50" cy="650" r="1"/><circle cx="150" cy="750" r="1"/><circle cx="250" cy="650" r="1.5"/><circle cx="350" cy="750" r="1"/><circle cx="450" cy="650" r="1"/><circle cx="550" cy="750" r="1.5"/><circle cx="650" cy="650" r="1"/><circle cx="750" cy="750" r="1"/></g></svg>');
+        }
+
+        /* ================== 布局样式 ================== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--nav-bg);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar-header {
+            padding: 15px 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar-brand i {
+            margin-right: 8px;
+            font-size: 1.3rem;
+        }
+
+        .sidebar.collapsed .sidebar-brand span {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .toggle-btn:hover {
+            background-color: var(--primary-color);
             color: white;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 12px 0;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 0.9rem;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-left-color: var(--secondary-color);
+        }
+
+        .menu-item i {
+            margin-right: 8px;
+            font-size: 1rem;
+            width: 18px;
             text-align: center;
         }
-        .status {
-            background: #34495e;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
+
+        .sidebar.collapsed .menu-item span {
+            display: none;
         }
-        .btn {
-            background: #4ecdc4;
-            color: white;
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 0.9rem;
+        }
+
+        .user-info i {
+            margin-right: 6px;
+        }
+
+        .sidebar.collapsed .user-info span {
+            display: none;
+        }
+
+        .theme-toggle {
+            background: none;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            color: var(--text-color);
+            font-size: 1.1rem;
             cursor: pointer;
-            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        /* 顶部操作栏样式 */
+        .top-bar {
+            background-color: var(--nav-bg);
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 左侧展开/隐藏按钮样式 */
+        .toggle-sidebar-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
+
+        .toggle-sidebar-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .page-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* 右上角菜单样式 */
+        .top-menu {
+            position: relative;
+        }
+
+        .menu-dots {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 6px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-dots:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.2);
+            padding: 8px;
+            min-width: 140px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .menu-dropdown.show {
+            display: block;
+        }
+
+        .menu-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .menu-dropdown-item:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .content-area {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* 模块样式 */
+        .module {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.2);
+            transition: transform .3s, background 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border-color);
+        }
+        
+        .module:hover {
+            transform: translateY(-3px);
+        }
+        
+        .module h2 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        
+        .tree ul {
+            list-style-type: none;
+            padding-left: 1em;
+        }
+        
+        .tree li {
+            margin: 0.2em 0;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+        
+        .tree li:hover {
+            color: var(--primary-color);
+        }
+        
+        .tree li.folder::before { content: "📁 "; }
+        .tree li.file::before { content: "🎬 "; }
+
+        /* 日志滚动区域 */
+        #logs, #folderTree {
+            max-height: 55vh;
+            overflow-y: auto;
+            background: var(--bg-color);
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            padding: 6px 12px;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: var(--text-secondary);
+            border-color: var(--text-secondary);
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            padding: 6px 12px;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--text-color);
+            border-color: var(--text-color);
+            transform: translateY(-2px);
+        }
+
+        /* 文件显示模式样式 */
+        .file-display-options {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .file-display-option {
+            padding: 6px 12px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+        
+        .file-display-option.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+        
+        .file-item {
+            background: var(--bg-color);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .file-item.selected {
+            border-color: var(--primary-color);
+            background: rgba(78, 205, 196, 0.1);
+        }
+        
+        .file-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+        
+        .file-name {
+            font-size: 0.8rem;
+            word-break: break-all;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .file-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .file-list-header {
+            display: table-row;
+            background: var(--bg-color);
+            font-weight: bold;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .file-list-header > div {
+            display: table-cell;
+            padding: 8px 10px;
+            vertical-align: middle;
+            font-size: 0.85rem;
+        }
+        
+        .file-list-item {
+            display: table-row;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+        
+        .file-list-item:hover {
+            background: rgba(78, 205, 196, 0.1);
+        }
+        
+        .file-list-item.selected {
+            background: rgba(78, 205, 196, 0.2);
+        }
+        
+        .file-list-item > div {
+            display: table-cell;
+            padding: 8px 10px;
+            vertical-align: middle;
+            font-size: 0.8rem;
+        }
+        
+        .file-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .file-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+        
+        .file-detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 规则分类样式 */
+        .rule-category {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: var(--bg-color);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .rule-category h3 {
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+        
+        /* 日志样式 */
+        .log-entry {
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            padding: 4px 6px;
+            border-left: 3px solid var(--primary-color);
+            background: rgba(0,0,0,0.1);
+            line-height: 1.3;
+        }
+        
+        .log-time {
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+        
+        .log-task {
+            color: var(--primary-color);
+        }
+        
+        .log-status {
+            color: var(--text-color);
+        }
+        
+        .log-status.success {
+            color: #28a745;
+        }
+        
+        .log-status.error {
+            color: #dc3545;
+        }
+        
+        .log-status.warning {
+            color: #ffc107;
+        }
+        
+        /* 表单样式 */
+        .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+        
+        .form-control, .form-select {
+            font-size: 0.85rem;
+            padding: 6px 10px;
+        }
+        
+        .form-text {
+            font-size: 0.8rem;
+        }
+        
+        /* 小屏幕适配 */
+        @media (max-width: 768px) {
+            body { font-size: 12px; }
+            
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 1000;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            
+            .mobile-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            
+            .mobile-overlay.active {
+                display: block;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .toggle-sidebar-btn {
+                display: block !important;
+            }
+        }
+
+        /* Windows文件浏览器样式 */
+        .file-explorer {
+            display: flex;
+            flex-direction: column;
+            height: 60vh;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .file-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            gap: 8px;
+        }
+        
+        .file-toolbar button {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .file-toolbar button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .file-path {
+            flex: 1;
+            padding: 4px 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .file-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .file-sidebar {
+            width: 180px;
+            background: var(--bg-color);
+            border-right: 1px solid var(--border-color);
+            padding: 8px 0;
+            overflow-y: auto;
+        }
+        
+        .file-main {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+        }
+        
+        .file-quick-access {
+            padding: 0 8px;
+            margin-bottom: 12px;
+        }
+        
+        .file-quick-access h4 {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--primary-color);
+        }
+        
+        .file-quick-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border-radius: 3px;
+        }
+        
+        .file-quick-item:hover {
+            background: var(--primary-color);
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>115文件整理工具</h1>
-        <div class="status">
-            <p id="status">检查后端连接...</p>
+    <div class="app-container">
+        <!-- 移动端遮罩层 -->
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+        
+        <!-- 侧边栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <i class="fas fa-cloud"></i>
+                    <span>SQNB</span>
+                </div>
+                <button class="toggle-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <a href="#" class="menu-item active" onclick="showModule('home')">
+                    <i class="fas fa-user-circle"></i>
+                    <span>用户中心</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showModule('login')">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>登录</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showModule('files')">
+                    <i class="fas fa-folder"></i>
+                    <span>文件</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showModule('rules')">
+                    <i class="fas fa-cog"></i>
+                    <span>规则</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showModule('sort')">
+                    <i class="fas fa-sort"></i>
+                    <span>整理</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showModule('logs')">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>日志</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showModule('about')">
+                    <i class="fas fa-info-circle"></i>
+                    <span>关于</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span>管理员</span>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-palette"></i>
+                </button>
+            </div>
         </div>
-        <button class="btn" onclick="testBackend()">测试后端连接</button>
-        <button class="btn" onclick="checkHealth()">检查健康状态</button>
+        
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <div class="top-bar">
+                <!-- 左侧展开/隐藏侧边栏按钮 -->
+                <button class="toggle-sidebar-btn" onclick="toggleSidebar()" title="展开/隐藏侧边栏">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="page-title" id="pageTitle">用户中心</div>
+                
+                <!-- 右上角菜单 -->
+                <div class="top-menu">
+                    <button class="menu-dots" onclick="toggleTopMenu()" title="菜单">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="menu-dropdown" id="topMenuDropdown">
+                        <button class="menu-dropdown-item" onclick="restartSystem()">
+                            <i class="fas fa-power-off"></i>
+                            <span>重启系统</span>
+                        </button>
+                        <button class="menu-dropdown-item" onclick="checkUpdates()">
+                            <i class="fas fa-cloud-download-alt"></i>
+                            <span>检查更新</span>
+                        </button>
+                        <button class="menu-dropdown-item" onclick="showHelp()">
+                            <i class="fas fa-question-circle"></i>
+                            <span>使用帮助</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div id="home" class="module">
+                    <h2>用户中心</h2>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="username" placeholder="请输入用户名">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" placeholder="不低于10位数字母数字">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="请再次输入新密码">
+                    </div>
+                    <button class="btn btn-primary">保存新用户名密码</button>
+                </div>
+
+                <div id="login" class="module" style="display:none;">
+                    <h2>登录 115 网盘</h2>
+                    <div class="d-flex align-items-center mb-3">
+                        <button class="btn btn-primary me-3" onclick="generateQR('client1')">生成扫码登录</button>
+                        <img id="qrcode_img" src="" alt="二维码" style="width:180px;height:180px;">
+                    </div>
+                    <div id="loginStatus" class="alert alert-success mt-3" style="display:none;">
+                        <i class="fas fa-check-circle"></i> 登录成功
+                    </div>
+                    <div class="mt-3">
+                        <p>或使用Cookie登录:</p>
+                        <div class="mb-3">
+                            <label for="cookie" class="form-label">Cookie</label>
+                            <textarea class="form-control" id="cookie" rows="3" placeholder="请输入115网盘Cookie"></textarea>
+                        </div>
+                        <button class="btn btn-secondary" onclick="loginWithCookie()">Cookie登录</button>
+                    </div>
+                </div>
+
+                <div id="files" class="module" style="display:none;">
+                    <h2>115 文件列表</h2>
+                    <div class="file-explorer">
+                        <div class="file-toolbar">
+                            <button onclick="changeFileDisplay('grid')"><i class="fas fa-th"></i></button>
+                            <button onclick="changeFileDisplay('list')"><i class="fas fa-list"></i></button>
+                            <button onclick="changeFileDisplay('details')"><i class="fas fa-info-circle"></i></button>
+                            <button onclick="goUp()"><i class="fas fa-arrow-up"></i></button>
+                            <button onclick="refreshFiles()"><i class="fas fa-sync-alt"></i></button>
+                            <div class="file-path" id="currentPath">/</div>
+                            <input type="text" placeholder="搜索文件..." style="font-size:0.8rem;padding:4px 8px;border:1px solid var(--border-color);border-radius:4px;background:var(--card-bg);color:var(--text-color);">
+                        </div>
+                        <div class="file-content">
+                            <div class="file-sidebar">
+                                <div class="file-quick-access">
+                                    <h4>快速访问</h4>
+                                    <div class="file-quick-item" onclick="navigateTo('/')"><i class="fas fa-home"></i> 根目录</div>
+                                    <div class="file-quick-item" onclick="navigateTo('/电影')"><i class="fas fa-film"></i> 电影</div>
+                                    <div class="file-quick-item" onclick="navigateTo('/电视剧')"><i class="fas fa-tv"></i> 电视剧</div>
+                                    <div class="file-quick-item" onclick="navigateTo('/纪录片')"><i class="fas fa-video"></i> 纪录片</div>
+                                </div>
+                            </div>
+                            <div class="file-main">
+                                <div id="fileGrid" class="file-grid">
+                                    <!-- 图标视图内容 -->
+                                </div>
+                                <div id="fileList" class="file-list" style="display:none;">
+                                    <div class="file-list-header">
+                                        <div style="width:40px;"></div>
+                                        <div style="width:50%;">名称</div>
+                                        <div style="width:20%;">大小</div>
+                                        <div style="width:30%;">修改日期</div>
+                                    </div>
+                                    <!-- 列表视图内容 -->
+                                </div>
+                                <div id="fileDetails" class="file-details" style="display:none;">
+                                    <!-- 详情视图内容 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rules" class="module" style="display:none;">
+                    <h2>规则配置</h2>
+                    <div class="rule-category">
+                        <h3>重命名规则</h3>
+                        <div class="mb-3">
+                            <label for="movieRenamePattern" class="form-label">电影重命名规则</label>
+                            <input type="text" class="form-control" id="movieRenamePattern" placeholder="例如: {title} ({year})">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tvRenamePattern" class="form-label">电视剧重命名规则</label>
+                            <input type="text" class="form-control" id="tvRenamePattern" placeholder="例如: {title} S{season}E{episode}">
+                        </div>
+                    </div>
+                    <div class="rule-category">
+                        <h3>分类规则</h3>
+                        <div class="mb-3">
+                            <label for="movieCategoryRules" class="form-label">电影分类规则</label>
+                            <textarea class="form-control" id="movieCategoryRules" rows="2" placeholder="请输入电影分类规则"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tvCategoryRules" class="form-label">电视剧分类规则</label>
+                            <textarea class="form-control" id="tvCategoryRules" rows="2" placeholder="请输入电视剧分类规则"></textarea>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tmdbApi" class="form-label">TMDB API Key</label>
+                        <input type="text" class="form-control" id="tmdbApi" placeholder="请输入TMDB API Key">
+                    </div>
+                    <div class="mb-3">
+                        <label for="proxyAddress" class="form-label">代理地址</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="proxyAddress" placeholder="请输入代理地址">
+                            <button class="btn btn-outline-secondary" type="button" onclick="checkProxy()">检查代理连通性</button>
+                        </div>
+                        <div class="form-text" id="proxyStatus"></div>
+                    </div>
+                    <button class="btn btn-primary">保存配置</button>
+                </div>
+
+                <div id="sort" class="module" style="display:none;">
+                    <h2>整理设置</h2>
+                    <p>来源文件夹 / 整理后文件夹配置</p>
+                    <div class="mb-3">
+                        <label for="sourceFolder" class="form-label">来源文件夹</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="sourceFolder" placeholder="请输入来源文件夹路径">
+                            <button class="btn btn-outline-secondary" type="button" onclick="selectFolder('source')">选择文件夹</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="targetFolder" class="form-label">整理后文件夹</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="targetFolder" placeholder="请输入整理后文件夹路径">
+                            <button class="btn btn-outline-secondary" type="button" onclick="selectFolder('target')">选择文件夹</button>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="autoSort">
+                        <label class="form-check-label" for="autoSort">
+                            启用自动整理
+                        </label>
+                    </div>
+                    <button class="btn btn-primary">开始整理</button>
+                </div>
+
+                <div id="logs" class="module" style="display:none;">
+                    <h2>运行日志</h2>
+                    <div id="logContent" class="border p-2" style="height: 55vh; overflow-y: auto; background: var(--bg-color);">
+                        <!-- 日志内容将在这里动态生成 -->
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-secondary" onclick="clearLogs()">清空日志</button>
+                        <button class="btn btn-secondary" onclick="exportLogs()">导出日志</button>
+                    </div>
+                </div>
+
+                <div id="about" class="module" style="display:none;">
+                    <h2>关于</h2>
+                    <p>版本号：v0.1.0</p>
+                    <p>115自动整理工具 - 基于115网盘的媒体文件智能整理系统</p>
+                    <div class="mb-3">
+                        <label class="form-label">主题设置</label>
+                        <select class="form-select" id="themeSelect" onchange="changeTheme(this.value)">
+                            <option value="auto">自动（根据时间）</option>
+                            <option value="light">亮色模式</option>
+                            <option value="dark">暗色模式</option>
+                            <option value="starry">星空模式</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="restartSystem()">重启系统</button>
+                    <button class="btn btn-primary mt-2" onclick="checkUpdates()">检查更新</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        async function testBackend() {
-            try {
-                const response = await fetch('/api/test');
-                const data = await response.json();
-                document.getElementById('status').textContent = `后端响应: ${data.message}`;
-            } catch (error) {
-                document.getElementById('status').textContent = `连接失败: ${error.message}`;
+        // 模拟文件树数据
+        const fakeFolders = [
+            { name: "电影", type: "folder", children: [
+                { name: "动作", type: "folder", children: [{ name: "movie1.mp4", type: "file" }] },
+                { name: "喜剧", type: "folder", children: [] }
+            ]},
+            { name: "电视剧", type: "folder", children: [
+                { name: "国产剧", type: "folder", children: [{ name: "series1.mp4", type: "file" }] },
+                { name: "美剧", type: "folder", children: [] }
+            ]},
+            { name: "纪录片", type: "folder", children: [] }
+        ];
+
+        // 模拟文件数据
+        const fakeFiles = [
+            { name: "movie1.mp4", type: "file", size: "1.2GB", modified: "2023-05-10", icon: "fa-file-video" },
+            { name: "series1.mp4", type: "file", size: "850MB", modified: "2023-05-12", icon: "fa-file-video" },
+            { name: "documentary.mp4", type: "file", size: "2.1GB", modified: "2023-05-15", icon: "fa-file-video" },
+            { name: "音乐", type: "folder", size: "3.4GB", modified: "2023-05-08", icon: "fa-folder" },
+            { name: "图片", type: "folder", size: "1.7GB", modified: "2023-05-05", icon: "fa-folder" }
+        ];
+
+        let currentPath = "/";
+        let currentDisplayMode = "grid";
+
+        // 构建树
+        function buildTree(nodes) {
+            let html = '<ul>';
+            nodes.forEach(n => {
+                html += '<li class="'+ n.type +'">' + n.name;
+                if(n.type === 'folder' && n.children.length > 0) html += buildTree(n.children);
+                html += '</li>';
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        // 加载文件树
+        function loadFolders(){
+            document.getElementById('folderTree').innerHTML = buildTree(fakeFolders);
+        }
+
+        // 切换文件显示模式
+        function changeFileDisplay(mode) {
+            currentDisplayMode = mode;
+            
+            // 隐藏所有视图
+            document.getElementById('fileGrid').style.display = 'none';
+            document.getElementById('fileList').style.display = 'none';
+            document.getElementById('fileDetails').style.display = 'none';
+            
+            // 显示选中的视图
+            if (mode === 'grid') {
+                document.getElementById('fileGrid').style.display = 'grid';
+                loadFileGrid();
+            } else if (mode === 'list') {
+                document.getElementById('fileList').style.display = 'table';
+                loadFileList();
+            } else if (mode === 'details') {
+                document.getElementById('fileDetails').style.display = 'grid';
+                loadFileDetails();
             }
         }
 
-        async function checkHealth() {
-            try {
-                const response = await fetch('/api/health');
-                const data = await response.json();
-                document.getElementById('status').textContent = `健康状态: ${data.status}`;
-            } catch (error) {
-                document.getElementById('status').textContent = `健康检查失败: ${error.message}`;
+        // 导航到指定路径
+        function navigateTo(path) {
+            currentPath = path;
+            document.getElementById('currentPath').textContent = path;
+            refreshFiles();
+        }
+
+        // 返回上一级
+        function goUp() {
+            if (currentPath !== "/") {
+                const paths = currentPath.split('/').filter(p => p);
+                paths.pop();
+                currentPath = paths.length ? '/' + paths.join('/') : '/';
+                document.getElementById('currentPath').textContent = currentPath;
+                refreshFiles();
             }
         }
 
-        // 页面加载时自动测试连接
-        window.onload = testBackend;
+        // 刷新文件列表
+        function refreshFiles() {
+            if (currentDisplayMode === 'grid') {
+                loadFileGrid();
+            } else if (currentDisplayMode === 'list') {
+                loadFileList();
+            } else if (currentDisplayMode === 'details') {
+                loadFileDetails();
+            }
+        }
+
+        // 加载图标视图
+        function loadFileGrid() {
+            let html = '';
+            fakeFiles.forEach((file, index) => {
+                html += `
+                <div class="file-item" onclick="selectFile(${index})">
+                    <div class="file-icon">
+                        <i class="fas ${file.icon}"></i>
+                    </div>
+                    <div class="file-name">${file.name}</div>
+                </div>`;
+            });
+            document.getElementById('fileGrid').innerHTML = html;
+        }
+
+        // 加载列表视图
+        function loadFileList() {
+            let html = '';
+            fakeFiles.forEach((file, index) => {
+                html += `
+                <div class="file-list-item" onclick="selectFile(${index})">
+                    <div><i class="fas ${file.icon}"></i></div>
+                    <div>${file.name}</div>
+                    <div>${file.size}</div>
+                    <div>${file.modified}</div>
+                </div>`;
+            });
+            document.getElementById('fileList').innerHTML = document.querySelector('.file-list-header').outerHTML + html;
+        }
+
+        // 加载详情视图
+        function loadFileDetails() {
+            let html = '';
+            fakeFiles.forEach((file, index) => {
+                html += `
+                <div class="file-detail-item" onclick="selectFile(${index})">
+                    <div><strong>文件名:</strong></div>
+                    <div>${file.name}</div>
+                </div>
+                <div class="file-detail-item">
+                    <div><strong>大小:</strong></div>
+                    <div>${file.size}</div>
+                </div>
+                <div class="file-detail-item">
+                    <div><strong>修改时间:</strong></div>
+                    <div>${file.modified}</div>
+                </div>
+                <div class="file-detail-item">
+                    <div><strong>类型:</strong></div>
+                    <div>${file.type}</div>
+                </div>
+                <hr>`;
+            });
+            document.getElementById('fileDetails').innerHTML = html;
+        }
+
+        // 选择文件
+        function selectFile(index) {
+            // 移除之前的选择
+            document.querySelectorAll('.file-item.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelectorAll('.file-list-item.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 添加新选择
+            if (currentDisplayMode === 'grid') {
+                document.querySelectorAll('.file-item')[index].classList.add('selected');
+            } else if (currentDisplayMode === 'list') {
+                document.querySelectorAll('.file-list-item')[index].classList.add('selected');
+            }
+        }
+
+        // 切换模块
+        function showModule(id){
+            document.querySelectorAll('.module').forEach(m => m.style.display='none');
+            document.getElementById(id).style.display='block';
+            document.querySelectorAll('.menu-item').forEach(l => l.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 更新页面标题
+            const pageTitle = document.getElementById('pageTitle');
+            const moduleTitles = {
+                'home': '用户中心',
+                'login': '登录',
+                'files': '文件',
+                'rules': '规则',
+                'sort': '整理',
+                'logs': '日志',
+                'about': '关于'
+            };
+            pageTitle.textContent = moduleTitles[id];
+            
+            // 在移动端点击菜单后自动关闭侧边栏
+            if (window.innerWidth <= 768) {
+                toggleMobileSidebar();
+            }
+            
+            // 如果是文件模块，默认加载图标视图
+            if (id === 'files') {
+                loadFileGrid();
+            }
+            
+            // 如果是日志模块，初始化日志
+            if (id === 'logs') {
+                initializeLogs();
+            }
+        }
+
+        // 切换侧边栏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            // 更新切换按钮图标
+            const toggleBtn = sidebar.querySelector('.toggle-btn i');
+            const topToggleBtn = document.querySelector('.toggle-sidebar-btn i');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                toggleBtn.className = 'fas fa-chevron-right';
+                topToggleBtn.className = 'fas fa-bars';
+            } else {
+                toggleBtn.className = 'fas fa-chevron-left';
+                topToggleBtn.className = 'fas fa-times';
+            }
+            
+            // 关闭右上角菜单
+            closeTopMenu();
+        }
+
+        // 切换右上角菜单
+        function toggleTopMenu() {
+            const dropdown = document.getElementById('topMenuDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function closeTopMenu() {
+            const dropdown = document.getElementById('topMenuDropdown');
+            dropdown.classList.remove('show');
+        }
+
+        // 移动端侧边栏切换 - 修复版
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+            }
+            
+            // 关闭右上角菜单
+            closeTopMenu();
+        }
+
+        // 点击遮罩层关闭侧边栏
+        document.getElementById('mobileOverlay').addEventListener('click', function() {
+            toggleMobileSidebar();
+        });
+
+        // 点击页面其他地方关闭右上角菜单
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.top-menu')) {
+                closeTopMenu();
+            }
+        });
+
+        // 二维码生成模拟
+        function generateQR(clientId){
+            document.getElementById('qrcode_img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://your-server.com/login?client=${clientId}`;
+            // 模拟登录成功
+            setTimeout(function() {
+                document.getElementById('loginStatus').style.display = 'block';
+            }, 2000);
+        }
+
+        // Cookie登录
+        function loginWithCookie() {
+            // 模拟登录成功
+            document.getElementById('loginStatus').style.display = 'block';
+        }
+
+        // 检查代理连通性
+        function checkProxy() {
+            const proxyAddress = document.getElementById('proxyAddress').value;
+            if (!proxyAddress) {
+                document.getElementById('proxyStatus').innerHTML = '<span style="color:red">请输入代理地址</span>';
+                return;
+            }
+            
+            document.getElementById('proxyStatus').innerHTML = '<span style="color:orange">正在检查代理连通性...</span>';
+            
+            // 模拟检查过程
+            setTimeout(function() {
+                const isSuccess = Math.random() > 0.3; // 70%成功率
+                if (isSuccess) {
+                    const delay = Math.floor(Math.random() * 500) + 100;
+                    document.getElementById('proxyStatus').innerHTML = `<span style="color:green">代理连通正常，延时: ${delay}ms</span>`;
+                } else {
+                    document.getElementById('proxyStatus').innerHTML = '<span style="color:red">代理连接失败，请检查地址</span>';
+                }
+            }, 1500);
+        }
+
+        // 选择文件夹
+        function selectFolder(type) {
+            alert(`请在弹出的窗口中选择${type === 'source' ? '来源' : '目标'}文件夹`);
+            // 实际实现中这里会调用文件选择器API
+        }
+
+        // 日志示例滚动
+        let logIndex = 1;
+        let logInterval;
+
+        function initializeLogs() {
+            const log = document.getElementById('logContent');
+            if (log && log.children.length === 0) {
+                // 添加一些示例日志
+                for (let i = 1; i <= 15; i++) {
+                    addLogEntry(`任务 ${i}`, '运行中', new Date(Date.now() - (15 - i) * 60000));
+                }
+                
+                // 开始实时添加日志
+                clearInterval(logInterval);
+                logInterval = setInterval(() => {
+                    const tasks = ['文件整理', 'TMDB查询', '重命名', '分类处理', '代理检查'];
+                    const statuses = ['运行中', '已完成', '失败', '警告'];
+                    const task = tasks[Math.floor(Math.random() * tasks.length)];
+                    const status = statuses[Math.floor(Math.random() * statuses.length)];
+                    
+                    addLogEntry(task, status, new Date());
+                }, 3000);
+            }
+        }
+
+        function addLogEntry(task, status, time) {
+            const log = document.getElementById('logContent');
+            const timestamp = time.toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            let statusClass = '';
+            if (status === '已完成') statusClass = 'success';
+            else if (status === '失败') statusClass = 'error';
+            else if (status === '警告') statusClass = 'warning';
+            
+            logEntry.innerHTML = `
+                <span class="log-time">[${timestamp}]</span>
+                <span class="log-task"> ${task}</span>
+                <span class="log-status ${statusClass}"> - ${status}</span>
+            `;
+            
+            log.appendChild(logEntry);
+            
+            // 优化滚动 - 只在用户没有手动滚动时自动滚动到底部
+            const isScrolledToBottom = log.scrollHeight - log.clientHeight <= log.scrollTop + 50;
+            if (isScrolledToBottom) {
+                log.scrollTop = log.scrollHeight;
+            }
+        }
+
+        // 清空日志
+        function clearLogs() {
+            document.getElementById('logContent').innerHTML = '';
+            closeTopMenu();
+        }
+
+        // 导出日志
+        function exportLogs() {
+            const logContent = document.getElementById('logContent').innerText;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '115-tool-logs.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            closeTopMenu();
+        }
+
+        // 系统功能函数
+        function restartSystem() {
+            if (confirm('确定要重启系统吗？')) {
+                alert('系统重启中...');
+                // 实际重启逻辑
+            }
+            closeTopMenu();
+        }
+
+        function checkUpdates() {
+            alert('正在检查更新...');
+            // 实际检查更新逻辑
+            closeTopMenu();
+        }
+
+        function showHelp() {
+            alert('帮助文档正在开发中...');
+            // 实际帮助逻辑
+            closeTopMenu();
+        }
+
+        // 主题切换功能
+        function toggleTheme() {
+            // 获取当前主题
+            const current = document.body.classList.contains('light-mode') ? 'light' : 
+                            document.body.classList.contains('starry-mode') ? 'starry' : 'dark';
+            
+            // 确定下一个主题
+            let nextTheme;
+            if (current === 'light') {
+                nextTheme = 'dark';
+            } else if (current === 'dark') {
+                nextTheme = 'starry';
+            } else {
+                nextTheme = 'light';
+            }
+            
+            setTheme(nextTheme);
+            localStorage.setItem('theme', nextTheme);
+            
+            // 更新下拉选择框
+            document.getElementById('themeSelect').value = nextTheme;
+        }
+
+        function changeTheme(theme) {
+            if (theme === 'auto') {
+                updateThemeBasedOnTime();
+                localStorage.removeItem('theme');
+                // 设置定时器每小时检查一次
+                setInterval(updateThemeBasedOnTime, 60 * 60 * 1000);
+            } else {
+                setTheme(theme);
+                localStorage.setItem('theme', theme);
+            }
+        }
+
+        function setTheme(theme) {
+            // 清除所有主题类
+            document.body.classList.remove('light-mode', 'starry-mode');
+            
+            // 设置新主题
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else if (theme === 'starry') {
+                document.body.classList.add('starry-mode');
+            }
+            // dark模式是默认的，不需要添加类
+        }
+
+        // 根据时间自动切换主题
+        function updateThemeBasedOnTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            
+            // 清除所有主题类
+            document.body.classList.remove('light-mode', 'starry-mode');
+            
+            // 根据时间设置主题
+            if (hours >= 6 && hours < 18) {
+                document.body.classList.add('light-mode');
+                if (document.getElementById('themeSelect').value === 'auto') {
+                    document.getElementById('themeSelect').value = 'light';
+                }
+            } else if (hours >= 18 && hours < 22) {
+                // 保持默认暗色模式
+                if (document.getElementById('themeSelect').value === 'auto') {
+                    document.getElementById('themeSelect').value = 'dark';
+                }
+            } else {
+                document.body.classList.add('starry-mode');
+                if (document.getElementById('themeSelect').value === 'auto') {
+                    document.getElementById('themeSelect').value = 'starry';
+                }
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (savedTheme) {
+                setTheme(savedTheme);
+                document.getElementById('themeSelect').value = savedTheme;
+            } else {
+                updateThemeBasedOnTime();
+                // 设置定时器每小时检查一次
+                setInterval(updateThemeBasedOnTime, 60 * 60 * 1000);
+            }
+            
+            loadFolders();
+            
+            // 修复移动端侧边栏点击事件
+            document.querySelector('.toggle-sidebar-btn').addEventListener('click', function() {
+                toggleMobileSidebar();
+            });
+        });
+
+        window.onload = loadFolders;
     </script>
 </body>
 </html>
