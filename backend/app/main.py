@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+import platform
 import uvicorn
 
 from app.client_115 import Client115
@@ -34,11 +35,19 @@ class SearchRequest(BaseModel):
 # API路由
 @app.get("/")
 async def root():
-    return {"message": "115网盘管理工具API", "version": "1.0.0"}
+    return {
+        "message": "115网盘管理工具API", 
+        "version": "1.0.0",
+        "architecture": platform.machine()
+    }
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy", 
+        "platform": platform.platform(),
+        "architecture": platform.machine()
+    }
 
 # 115网盘API
 @app.post("/api/115/generate-qr")
