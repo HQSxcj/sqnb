@@ -1,4 +1,4 @@
-name: Build and Push Multi-arch Image
+name: Build and Push Docker Image
 
 on:
   push:
@@ -26,25 +26,15 @@ jobs:
         # 如果是标签推送，使用标签名作为版本
         if [[ ${{ github.ref }} == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/}
-          IS_RELEASE=true
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building release version: $VERSION"
         else
-          # 对于main分支，使用dev版本号 + 短commit
+          # 对于main分支，使用dev版本
           SHORT_SHA="${{ github.sha }}" && SHORT_SHA=${SHORT_SHA:0:7}
-          VERSION="v0.0.1-dev-${SHORT_SHA}"
-          IS_RELEASE=false
+          VERSION="dev-$SHORT_SHA"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🔧 Building development version: $VERSION"
         fi
-        
-        # 创建版本信息文件
-        cat > version.json << EOF
-        {
-          "version": "$VERSION",
-          "build_time": "$(date -u +"%Y-%m-%d %H:%M:%S")",
-          "commit_hash": "${{ github.sha }}"
-        }
-        EOF
-        
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -72,10 +62,9 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Display version info
+    - name: Success notification
       run: |
-        echo "✅ Multi-arch build completed!"
-        echo "Version: ${{ steps.meta.outputs.version }}"
-        echo "Build Time: $(date -u +"%Y-%m-%d %H:%M:%S")"
-        echo "Commit: ${{ github.sha }}"
-        echo "Image: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
+        echo "🎉 Docker镜像构建完成!"
+        echo "版本: ${{ steps.meta.outputs.version }}"
+        echo "镜像: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
+        echo "平台: linux/amd64, linux/arm64"
