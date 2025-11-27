@@ -2,6 +2,7 @@ import qrcode
 import io
 import base64
 import asyncio
+import platform
 from typing import Dict, List, Optional
 
 class MockP115Client:
@@ -25,7 +26,7 @@ class MockP115Client:
         return {
             'files': [
                 {
-                    'name': '示例电影.mp4',
+                    'name': f'示例电影-{platform.machine()}.mp4',
                     'is_directory': False,
                     'size': 1073741824,
                     'modified_time': '2024-01-01 12:00:00',
@@ -49,9 +50,9 @@ class MockP115Client:
 # 使用模拟客户端
 try:
     from p115client import P115Client
-    print("Using real p115client")
+    print(f"Using real p115client on {platform.machine()}")
 except ImportError:
-    print("Using mock p115client")
+    print(f"Using mock p115client on {platform.machine()}")
     P115Client = MockP115Client
 
 class Client115:
@@ -77,7 +78,8 @@ class Client115:
                 "success": True,
                 "qrcode": f"data:image/png;base64,{img_str}",
                 "uid": qr_info['uid'],
-                "time": qr_info.get('time', '')
+                "time": qr_info.get('time', ''),
+                "architecture": platform.machine()
             }
         except Exception as e:
             return {"success": False, "message": str(e)}
@@ -90,7 +92,11 @@ class Client115:
                 "success": True,
                 "status": "success",
                 "message": "登录成功",
-                "user_info": {"user_id": "test_user", "user_name": "测试用户"}
+                "user_info": {
+                    "user_id": "test_user", 
+                    "user_name": "测试用户",
+                    "architecture": platform.machine()
+                }
             }
         except Exception as e:
             return {"success": False, "message": str(e)}
@@ -102,7 +108,11 @@ class Client115:
             return {
                 "success": True, 
                 "message": "登录成功",
-                "user_info": {"user_id": "test_user", "user_name": "测试用户"}
+                "user_info": {
+                    "user_id": "test_user", 
+                    "user_name": "测试用户",
+                    "architecture": platform.machine()
+                }
             }
         except Exception as e:
             return {"success": False, "message": str(e)}
@@ -119,7 +129,8 @@ class Client115:
                     "modified": item.get('modified_time', ''),
                     "file_id": item.get('file_id', ''),
                     "parent_id": item.get('parent_id', ''),
-                    "icon": "fa-folder" if item.get('is_directory') else self._get_file_icon(item.get('name', ''))
+                    "icon": "fa-folder" if item.get('is_directory') else self._get_file_icon(item.get('name', '')),
+                    "architecture": platform.machine()
                 }
                 files.append(file_info)
             
@@ -127,7 +138,8 @@ class Client115:
                 "success": True,
                 "files": files,
                 "current_path": path,
-                "current_cid": cid
+                "current_cid": cid,
+                "architecture": platform.machine()
             }
         except Exception as e:
             return {"success": False, "message": str(e)}
@@ -136,7 +148,8 @@ class Client115:
         return {
             "success": True,
             "files": [],
-            "keyword": keyword
+            "keyword": keyword,
+            "architecture": platform.machine()
         }
     
     def _format_size(self, size_bytes: int) -> str:
