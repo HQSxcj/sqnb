@@ -4,10 +4,24 @@ from pydantic import BaseModel
 from typing import Optional
 import platform
 import uvicorn
+import json
+import os
+from datetime import datetime
 
-from app.client_115 import Client115
+# 读取版本信息
+def get_version_info():
+    try:
+        with open('/app/version.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error reading version.json: {e}")
+        return {
+            "version": "v0.0.1-dev",
+            "build_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "commit_hash": "unknown"
+        }
 
-app = FastAPI(title="115网盘管理工具", version="1.0.0")
+app = FastAPI(title="115网盘管理工具", version="0.0.1")
 
 # CORS配置
 app.add_middleware(
@@ -17,6 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from app.client_115 import Client115
 
 # 全局115客户端实例
 client_115 = Client115()
@@ -35,19 +51,28 @@ class SearchRequest(BaseModel):
 # API路由
 @app.get("/")
 async def root():
+    version_info = get_version_info()
     return {
         "message": "115网盘管理工具API", 
-        "version": "1.0.0",
+        "version": version_info["version"],
+        "build_time": version_info["build_time"],
         "architecture": platform.machine()
     }
 
 @app.get("/health")
 async def health_check():
+    version_info = get_version_info()
     return {
         "status": "healthy", 
         "platform": platform.platform(),
-        "architecture": platform.machine()
+        "architecture": platform.machine(),
+        "version": version_info["version"]
     }
+
+@app.get("/api/version")
+async def get_version():
+    """获取版本信息"""
+    return get_version_info()
 
 # 115网盘API
 @app.post("/api/115/generate-qr")
