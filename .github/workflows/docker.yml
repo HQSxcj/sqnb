@@ -1,15 +1,13 @@
-name: Build and Push Docker Images
+name: Build and Push Single Image
 
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
   workflow_dispatch:
 
 env:
   REGISTRY: docker.io
-  BACKEND_IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/sqnb-backend
-  FRONTEND_IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/sqnb-frontend
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/sqnb
 
 jobs:
   build-and-push:
@@ -31,28 +29,18 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and push backend image
+    - name: Build and push single image
       uses: docker/build-push-action@v5
       with:
-        context: ./backend
-        file: ./backend/Dockerfile
+        context: .
+        file: ./Dockerfile
         push: true
-        tags: ${{ env.BACKEND_IMAGE_NAME }}:latest
+        tags: ${{ env.IMAGE_NAME }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Build and push frontend image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./frontend
-        file: ./frontend/Dockerfile
-        push: true
-        tags: ${{ env.FRONTEND_IMAGE_NAME }}:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Verify pushed images
+    - name: Verify pushed image
       run: |
-        echo "✅ Docker images built and pushed successfully!"
-        echo "Backend: ${{ env.BACKEND_IMAGE_NAME }}:latest"
-        echo "Frontend: ${{ env.FRONTEND_IMAGE_NAME }}:latest"
+        echo "✅ Single Docker image built and pushed successfully!"
+        echo "Image: ${{ env.IMAGE_NAME }}:latest"
+        echo "Access: http://localhost:9710"
