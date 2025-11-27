@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115文件整理工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #2a2f3a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .status {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .btn {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>115文件整理工具</h1>
+        <div class="status">
+            <p id="status">检查后端连接...</p>
+        </div>
+        <button class="btn" onclick="testBackend()">测试后端连接</button>
+        <button class="btn" onclick="checkHealth()">检查健康状态</button>
+    </div>
+
+    <script>
+        async function testBackend() {
+            try {
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                document.getElementById('status').textContent = `后端响应: ${data.message}`;
+            } catch (error) {
+                document.getElementById('status').textContent = `连接失败: ${error.message}`;
+            }
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                document.getElementById('status').textContent = `健康状态: ${data.status}`;
+            } catch (error) {
+                document.getElementById('status').textContent = `健康检查失败: ${error.message}`;
+            }
+        }
+
+        // 页面加载时自动测试连接
+        window.onload = testBackend;
+    </script>
+</body>
+</html>
