@@ -6,13 +6,15 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
+# 先复制requirements.txt
 COPY requirements.txt .
 
-# 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
+# 直接使用pip安装，不要用virtualenv
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
 COPY . .
@@ -22,4 +24,4 @@ RUN mkdir -p /app/logs
 
 EXPOSE 9711
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9711", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9711"]
