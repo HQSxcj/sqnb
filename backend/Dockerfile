@@ -7,20 +7,25 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 先复制requirements.txt
-COPY requirements.txt .
+# 升级pip和setuptools
+RUN pip install --upgrade pip setuptools wheel
 
-# 直接使用pip安装，不要用virtualenv
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# 先安装基础依赖
+COPY requirements-base.txt .
+
+RUN pip install --no-cache-dir -r requirements-base.txt
+
+# 单独安装 p115client
+RUN pip install --no-cache-dir "p115client @ git+https://github.com/ChenyangGao/p115client.git"
+
+# 验证安装
+RUN python -c "import p115client; print(f'p115client version: {p115client.__version__}')"
 
 # 复制应用代码
 COPY . .
-
-# 创建必要的目录
-RUN mkdir -p /app/logs
 
 EXPOSE 9711
 
