@@ -31,20 +31,6 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Extract metadata (tags, labels)
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: |
-          ${{ env.BACKEND_IMAGE_NAME }}
-          ${{ env.FRONTEND_IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=sha,prefix={{branch}}-
-
     - name: Build and push backend image
       uses: docker/build-push-action@v5
       with:
@@ -52,7 +38,6 @@ jobs:
         file: ./backend/Dockerfile
         push: true
         tags: ${{ env.BACKEND_IMAGE_NAME }}:latest
-        labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -63,11 +48,11 @@ jobs:
         file: ./frontend/Dockerfile
         push: true
         tags: ${{ env.FRONTEND_IMAGE_NAME }}:latest
-        labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
     - name: Verify pushed images
       run: |
-        echo "Backend image: ${{ env.BACKEND_IMAGE_NAME }}:latest"
-        echo "Frontend image: ${{ env.FRONTEND_IMAGE_NAME }}:latest"
+        echo "✅ Docker images built and pushed successfully!"
+        echo "Backend: ${{ env.BACKEND_IMAGE_NAME }}:latest"
+        echo "Frontend: ${{ env.FRONTEND_IMAGE_NAME }}:latest"
