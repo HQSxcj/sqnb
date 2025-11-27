@@ -1,42 +1,9 @@
-version: '3.8'
-
-services:
-  backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    image: yourdockerhubusername/sqnb-backend:latest
-    ports:
-      - "9711:9711"
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/sqnb
-    depends_on:
-      - db
-    volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 9711 --reload
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: yourdockerhubusername/sqnb-frontend:latest
-    ports:
-      - "9710:9710"
-    depends_on:
-      - backend
-
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: sqnb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-database.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
-
-volumes:
-  postgres_data:
+{
+  "name": "sqnb-frontend",
+  "version": "1.0.0",
+  "description": "115网盘管理前端",
+  "scripts": {
+    "dev": "echo 'Frontend served by nginx'",
+    "build": "echo 'No build process needed for static HTML'"
+  }
+}
