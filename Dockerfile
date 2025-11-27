@@ -1,8 +1,8 @@
-FROM python:3.11-slim
+FROM --platform=$TARGETPLATFORM python:3.11-slim
 
 WORKDIR /app
 
-# 安装系统依赖
+# 使用兼容的包管理器
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -22,35 +22,36 @@ COPY backend/app ./app
 # 复制前端文件到Nginx目录
 COPY frontend/index.html /var/www/html/
 
-# 配置Nginx
-RUN echo 'server { \
-    listen 9710; \
-    server_name localhost; \
-    \
-    location / { \
-        root /var/www/html; \
-        index index.html; \
-        try_files \$uri \$uri/ /index.html; \
-    } \
-    \
-    location /api/ { \
-        proxy_pass http://localhost:9711; \
-        proxy_set_header Host \$host; \
-        proxy_set_header X-Real-IP \$remote_addr; \
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; \
-    } \
-    \
-    location /docs { \
-        proxy_pass http://localhost:9711; \
-    } \
-    \
-    location /openapi.json { \
-        proxy_pass http://localhost:9711; \
-    } \
-}' > /etc/nginx/sites-available/default
+# 配置Nginx - 使用兼容的配置
+RUN echo 'server { \n\
+    listen 9710; \n\
+    server_name localhost; \n\
+    \n\
+    location / { \n\
+        root /var/www/html; \n\
+        index index.html; \n\
+        try_files \$uri \$uri/ /index.html; \n\
+    } \n\
+    \n\
+    location /api/ { \n\
+        proxy_pass http://localhost:9711; \n\
+        proxy_set_header Host \$host; \n\
+        proxy_set_header X-Real-IP \$remote_addr; \n\
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; \n\
+    } \n\
+    \n\
+    location /docs { \n\
+        proxy_pass http://localhost:9711; \n\
+    } \n\
+    \n\
+    location /openapi.json { \n\
+        proxy_pass http://localhost:9711; \n\
+    } \n\
+}' > /etc/nginx/sites-available/default && \
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
 # 暴露端口
 EXPOSE 9710 9711
 
-# 启动命令
+# 启动命令 - 兼容不同架构
 CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port 9711 & nginx -g 'daemon off;'"
