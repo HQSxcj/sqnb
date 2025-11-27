@@ -16,7 +16,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8947:5000"
+      - "8947:8947"
     volumes:
       - backend_data:/app/data
     restart: unless-stopped
