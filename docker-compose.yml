@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8947:8947"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8947:5000"
+    volumes:
+      - backend_data:/app/data
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=development
+
+volumes:
+  backend_data:
