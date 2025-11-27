@@ -16,6 +16,9 @@ COPY backend/requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# 复制版本文件
+COPY version.json .
+
 # 复制后端代码
 COPY backend/app ./app
 
