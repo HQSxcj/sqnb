@@ -1,8 +1,10 @@
-FROM nginx:alpine
+FROM node:16-alpine
 
-COPY index.html /usr/share/nginx/html/
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
 
-EXPOSE 8947
+COPY . .
+EXPOSE 9710  # 确保这里也是 9710
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "9710"]
