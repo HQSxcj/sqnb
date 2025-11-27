@@ -1,20 +1,17 @@
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import asyncio
-from typing import Dict, List, Optional
+from typing import Optional
 import uvicorn
-import os
 
-from app.client_115 import Client115  # 注意：文件名不能以数字开头
+from app.client_115 import Client115
 
 app = FastAPI(title="115网盘管理工具", version="1.0.0")
 
 # CORS配置
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:9710", "http://127.0.0.1:9710", "*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,10 +30,6 @@ class FileListRequest(BaseModel):
 
 class SearchRequest(BaseModel):
     keyword: str
-
-class CreateFolderRequest(BaseModel):
-    parent_cid: str
-    folder_name: str
 
 # API路由
 @app.get("/")
@@ -75,26 +68,10 @@ async def search_files(request: SearchRequest):
     """搜索文件"""
     return await client_115.search_files(request.keyword)
 
-@app.post("/api/115/create-folder")
-async def create_folder(request: CreateFolderRequest):
-    """创建文件夹"""
-    return await client_115.create_folder(request.parent_cid, request.folder_name)
-
 @app.get("/api/115/user-info")
 async def get_user_info():
     """获取用户信息"""
     return {"success": True, "user_info": {}}
-
-# 文件整理相关API
-@app.post("/api/organize/start")
-async def start_organize():
-    """开始文件整理"""
-    return {"success": True, "message": "整理任务已开始"}
-
-@app.get("/api/organize/status")
-async def get_organize_status():
-    """获取整理状态"""
-    return {"status": "idle", "progress": 0}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=9711)
