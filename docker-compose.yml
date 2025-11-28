@@ -4,12 +4,12 @@ services:
   backend:
     build: ./backend
     image: yourdockerhubusername/sqnb-backend
-    ports:
-      - "9711:9711"
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/sqnb
     depends_on:
       - db
+    volumes:
+      - ./version.json:/app/version.json
 
   frontend:
     build: ./frontend
