@@ -1,23 +1,14 @@
 version: '3.8'
 
 services:
-  backend:
-    build: ./backend
-    image: yourdockerhubusername/sqnb-backend
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/sqnb
-    depends_on:
-      - db
-    volumes:
-      - ./version.json:/app/version.json
-
-  frontend:
-    build: ./frontend
-    image: yourdockerhubusername/sqnb-frontend
+  app:
+    build: ./frontend  # 只构建前端镜像
     ports:
       - "9710:9710"
     depends_on:
-      - backend
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/sqnb
 
   db:
     image: postgres:13
