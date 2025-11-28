@@ -1,6 +1,0 @@
-fastapi
-uvicorn[standard]
-flask
-requests
-python-115
-watchdog
