@@ -1,9 +1,8 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    tags:
-      - '*'   # 任意 tag push 都触发
+  release:
+    types: [published]
 
 env:
   REGISTRY: docker.io
@@ -17,12 +16,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      - name: Determine version and tags
         id: meta
         run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION=${{ github.event.release.tag_name }}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Building Docker image version: $VERSION"
+
+          # 判断是否为 pre-release
+          if [ "${{ github.event.release.prerelease }}" == "true" ]; then
+            echo "tags=$VERSION,beta" >> $GITHUB_OUTPUT
+            echo "ℹ️ This is a Beta release: $VERSION → beta"
+          else
+            echo "tags=$VERSION,latest" >> $GITHUB_OUTPUT
+            echo "ℹ️ This is a stable release: $VERSION → latest"
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -38,20 +45,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push multi-arch image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ join(fromJSON('["' + steps.meta.outputs.tags + '"]'), ',') }}
 
       - name: Success notification
         run: |
-          echo "🎉 Docker镜像构建完成!"
+          echo "🎉 Docker 镜像构建完成!"
           echo "版本: ${{ steps.meta.outputs.version }}"
-          echo "镜像: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
-          echo "平台: linux/amd64, linux/arm64"
+          echo "标签: ${{ steps.meta.outputs.tags }}"
