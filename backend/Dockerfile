@@ -16,7 +16,8 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
-COPY . .
+COPY app ./app
+COPY version.json .
 
 EXPOSE 9711
 
