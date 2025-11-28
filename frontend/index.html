@@ -1197,9 +1197,10 @@
             }
         }
 
-        // 获取版本信息
+        // 获取版本信息 - 修改API调用路径
         async function loadVersionInfo() {
             try {
+                // 修改：使用相对路径，由Nginx代理到后端
                 const response = await fetch('/api/version');
                 const versionInfo = await response.json();
                 
@@ -1208,23 +1209,79 @@
                 document.getElementById('buildTime').textContent = versionInfo.build_time;
                 document.getElementById('commitHash').textContent = versionInfo.commit_hash;
                 
-                // 获取架构信息
+                // 修改：使用相对路径
                 const healthResponse = await fetch('/health');
                 const healthInfo = await healthResponse.json();
                 document.getElementById('architecture').textContent = healthInfo.architecture;
                 
-                // 在控制台显示
                 console.log(`🎉 SQNB ${versionInfo.version}`);
                 console.log(`📅 Build: ${versionInfo.build_time}`);
                 console.log(`🔗 Commit: ${versionInfo.commit_hash}`);
                 console.log(`🏗️ Architecture: ${healthInfo.architecture}`);
                 
-                // 更新页面标题
                 document.title = `SQNB - ${versionInfo.version}`;
                 
             } catch (error) {
                 console.error('Failed to load version info:', error);
                 document.getElementById('versionDisplay').textContent = 'v0.0.1-dev';
+            }
+        }
+
+        // 二维码生成 - 修改API调用路径
+        async function generateQR(clientId){
+            try {
+                // 修改：使用相对路径
+                const response = await fetch('/api/115/generate-qr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('qrcode_img').src = result.qrcode;
+                    // 模拟登录成功
+                    setTimeout(function() {
+                        document.getElementById('loginStatus').style.display = 'block';
+                    }, 2000);
+                } else {
+                    alert('生成二维码失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('生成二维码失败:', error);
+                alert('生成二维码失败，请检查网络连接');
+            }
+        }
+
+        // Cookie登录 - 修改API调用路径
+        async function loginWithCookie() {
+            const cookie = document.getElementById('cookie').value;
+            if (!cookie) {
+                alert('请输入Cookie');
+                return;
+            }
+            
+            try {
+                // 修改：使用相对路径
+                const response = await fetch('/api/115/login-cookie', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cookie: cookie })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('loginStatus').style.display = 'block';
+                    document.getElementById('loginStatus').textContent = '登录成功 - ' + result.message;
+                } else {
+                    alert('登录失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                alert('登录失败，请检查网络连接');
             }
         }
 
@@ -1326,21 +1383,6 @@
                 closeTopMenu();
             }
         });
-
-        // 二维码生成模拟
-        function generateQR(clientId){
-            document.getElementById('qrcode_img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://your-server.com/login?client=${clientId}`;
-            // 模拟登录成功
-            setTimeout(function() {
-                document.getElementById('loginStatus').style.display = 'block';
-            }, 2000);
-        }
-
-        // Cookie登录
-        function loginWithCookie() {
-            // 模拟登录成功
-            document.getElementById('loginStatus').style.display = 'block';
-        }
 
         // 检查代理连通性
         function checkProxy() {
