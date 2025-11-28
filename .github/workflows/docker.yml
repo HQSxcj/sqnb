@@ -2,69 +2,55 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    tags: 
+      - 'v*'   # 只有以 v 开头的 tag 才触发
 
 env:
   REGISTRY: docker.io
   IMAGE_NAME: yongzz668/sqnb
 
 jobs:
-  build-multi-arch:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Extract version metadata
-      id: meta
-      run: |
-        # 如果是标签推送，使用标签名作为版本
-        if [[ ${{ github.ref }} == refs/tags/* ]]; then
-          VERSION=${GITHUB_REF#refs/tags/}
+      - name: Extract version from tag
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Building release version: $VERSION"
-        else
-          # 对于main分支，使用dev版本
-          SHORT_SHA="${{ github.sha }}" && SHORT_SHA=${SHORT_SHA:0:7}
-          VERSION="dev-$SHORT_SHA"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "🔧 Building development version: $VERSION"
-        fi
+          echo "📦 Building Docker image version: $VERSION"
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        platforms: linux/amd64,linux/arm64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and push multi-arch images
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: |
-          ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-    - name: Success notification
-      run: |
-        echo "🎉 Docker镜像构建完成!"
-        echo "版本: ${{ steps.meta.outputs.version }}"
-        echo "镜像: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
-        echo "平台: linux/amd64, linux/arm64"
+      - name: Success notification
+        run: |
+          echo "🎉 Docker镜像构建完成!"
+          echo "版本: ${{ steps.meta.outputs.version }}"
+          echo "镜像: ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
