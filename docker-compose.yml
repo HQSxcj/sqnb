@@ -1,24 +1,27 @@
 version: '3.8'
 
 services:
-  app:
-    build: ./frontend  # 只构建前端镜像
+  sqnb:
+    build: .  # 从项目根目录构建
     ports:
       - "9710:9710"
     depends_on:
       - db
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/sqnb
+      - NODE_ENV=production
+    volumes:
+      - sqnb_data:/app/data  # 应用数据持久化
 
   db:
     image: postgres:13
     environment:
       POSTGRES_DB: sqnb
-      POSTGRES_USER: user
+      POSTRES_USER: user
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-database.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
+  sqnb_data:
   postgres_data:
